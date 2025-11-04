@@ -1,0 +1,844 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lawrence Auto Sales – LLC</title>
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 24px; background:#0b1023; color:#e5e7eb; }
+    h1 { margin: 0 0 8px; }
+    .muted { color:#9ca3af; margin:0 0 16px }
+    .wrap { max-width: 1100px; margin:auto; display:grid; gap:16px; }
+    .panel { background:#0c1428; border:1px solid #1f2937; border-radius:14px; padding:16px; }
+    label { display:block; margin:10px 0 6px; color:#9ca3af; }
+    input, textarea, select { width:100%; padding:10px 12px; border-radius:10px; border:1px solid #1f2937; background:#071022; color:#e5e7eb; }
+    textarea { resize:vertical; min-height:70px }
+    .row { display:grid; gap:10px; grid-template-columns: 1fr 1fr; }
+    .row3 { display:grid; gap:10px; grid-template-columns: 1fr 1fr 1fr; }
+    button, .btn { border:0; padding:10px 14px; border-radius:10px; font-weight:700; cursor:pointer; text-decoration:none; display:inline-block; text-align:center; }
+    .btn-primary { background:#22d3ee; color:#062a30; }
+    .btn { background:#101a32; color:#9ca3af; }
+    .btn-warn { background:#f59e0b; color:#2d1a03; }
+    .btn-danger { background:#ef4444; color:#320b0b; }
+    .btn-ok { background:#34d399; color:#052d27; }
+    .btn-alt { background:#0a1224; color:#9ca3af; border:1px solid #1f2937 }
+    .list { display:grid; gap:12px; }
+    .item { background:#0c1428; border:1px solid #1f2937; border-radius:12px; overflow:hidden; }
+    .thumb { width:100%; height:260px; background:#020617; display:block; object-fit:cover; }
+    .inner { padding:12px; }
+    .top { display:flex; gap:10px; align-items:center; justify-content:space-between; }
+    .title { font-weight:800; display:flex; align-items:center; gap:8px }
+    .price { font-weight:800; }
+    .sold { text-decoration: line-through; opacity:.65; }
+    .controls { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+    .previewBox { border:1px dashed #1f2937; border-radius:10px; padding:10px; display:grid; grid-template-columns: 120px 1fr; gap:10px; align-items:center; }
+    .preview { width:120px; height:80px; object-fit:cover; background:#020617; border-radius:8px; }
+    .grid { display:grid; gap:16px; grid-template-columns: 420px 1fr; }
+    @media (max-width: 980px){ .grid { grid-template-columns: 1fr; } }
+    .toolbar { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px }
+    .star { font-size:20px; line-height:1; cursor:pointer; user-select:none }
+    .star.on { color:#facc15 }
+
+    /* Gallery */
+    .gallery-thumbs{ display:flex; gap:6px; padding:8px 12px; overflow:auto; background:#0a1224; border-top:1px solid #1f2937 }
+    .gallery-thumbs img{ width:68px; height:50px; object-fit:cover; border-radius:6px; opacity:.75; cursor:pointer; border:1px solid #1f2937 }
+    .gallery-thumbs img.active{ outline:2px solid #22d3ee; opacity:1 }
+
+    /* Modal styles */
+    .overlay{position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:50}
+    .modal{width:min(760px, 96vw); background:#0c1428; border:1px solid #1f2937; border-radius:16px; padding:16px; box-shadow:0 20px 60px rgba(0,0,0,.6)}
+    .modal h3{margin:0 0 8px}
+    .modal .actions{display:flex; gap:8px; justify-content:flex-end; margin-top:12px}
+    .thumbsGrid{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px }
+    .mini{ width:90px; height:66px; object-fit:cover; border-radius:6px; border:1px solid #1f2937; position:relative }
+    .miniWrap{ position:relative; display:inline-block }
+    .x{ position:absolute; top:4px; right:4px; background:#ef4444; color:#fff; border:0; border-radius:6px; font-size:12px; padding:2px 6px; cursor:pointer }
+    .miniWrap.dragOver{ outline:2px dashed #22d3ee; outline-offset:4px }
+
+    /* Hero 3D panel */
+    #hero3dSection{display:none}
+
+    /* Detail page */
+    #detailPage{display:none; max-width: 1024px; margin:auto}
+    .detail-title{display:flex; align-items:center; justify-content:space-between}
+    .detail-price{font-weight:800; font-size:24px}
+    .detail-hero{width:100%; height:420px; object-fit:cover; border-radius:12px; border:1px solid #1f2937; background:#020617}
+    .detail-grid{display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:12px}
+    @media (max-width: 980px){ .detail-grid{ grid-template-columns: 1fr } }
+    .detail-box{background:#0c1428; border:1px solid #1f2937; border-radius:12px; padding:12px}
+  </style>
+</head>
+<body>
+  <!-- Main App Wrapper -->
+  <div id="app">
+    <div class="wrap">
+      <h1>🚗 Lawrence Auto Sales – LLC</h1>
+
+      <!-- Auto 3D Hero (shows first listing that has a 3D model) -->
+      <section class="panel" id="hero3dSection">
+        <h2 style="margin:0 0 10px">Featured 3D View</h2>
+        <model-viewer id="hero3d"
+          src=""
+          alt="3D model preview"
+          ar ar-modes="webxr scene-viewer quick-look"
+          camera-controls auto-rotate exposure="1.1" shadow-intensity="1"
+          style="width:100%; height:380px; background:#020617; border-radius:12px; border:1px solid #1f2937;">
+        </model-viewer>
+        <div class="muted" id="hero3dCaption" style="margin-top:8px"></div>
+      </section>
+
+      <p class="muted">Add cars for sale on the left. Search & filter your inventory on the right. Photos, 3D models & data are saved in this browser.</p>
+
+      <div class="grid">
+        <!-- LEFT: ADD FORM -->
+        <section class="panel">
+          <h2 style="margin:0 0 10px">Add Car</h2>
+          <form id="carForm">
+            <div class="row">
+              <div>
+                <label>Make</label>
+                <input id="make" type="text" placeholder="e.g., Toyota" required />
+              </div>
+              <div>
+                <label>Model</label>
+                <input id="model" type="text" placeholder="e.g., Camry" required />
+              </div>
+            </div>
+
+            <div class="row">
+              <div>
+                <label>Year</label>
+                <input id="year" type="number" min="1980" max="2099" placeholder="2018" required />
+              </div>
+              <div>
+                <label>Price (USD)</label>
+                <input id="price" type="number" min="0" step="100" placeholder="15000" required />
+              </div>
+            </div>
+
+            <div class="row">
+              <div>
+                <label>Mileage (mi)</label>
+                <input id="mileage" type="number" min="0" step="100" placeholder="72000" />
+              </div>
+              <div>
+                <label>Exterior Color</label>
+                <input id="color" type="text" placeholder="e.g., Black" />
+              </div>
+            </div>
+
+            <div class="row">
+              <div>
+                <label>Transmission</label>
+                <select id="trans">
+                  <option value="">Select…</option>
+                  <option>Automatic</option>
+                  <option>Manual</option>
+                  <option>CVT</option>
+                </select>
+              </div>
+              <div>
+                <label>Drivetrain</label>
+                <select id="drive">
+                  <option value="">Select…</option>
+                  <option>FWD</option>
+                  <option>RWD</option>
+                  <option>AWD</option>
+                  <option>4WD</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div>
+                <label>VIN</label>
+                <input id="vin" type="text" placeholder="e.g., 1HGCM82633A004352" />
+              </div>
+              <div>
+                <label>Contact (email or phone)</label>
+                <input id="contact" type="text" placeholder="you@example.com or (785) 555-1234" />
+              </div>
+            </div>
+
+            <label>Description</label>
+            <textarea id="desc" placeholder="Condition, maintenance, extras…"></textarea>
+
+            <label>Photos (you can pick several)</label>
+            <div class="previewBox">
+              <img id="preview" class="preview" alt="Preview (first selected)" />
+              <div>
+                <input id="photos" type="file" accept="image/*" multiple />
+                <div class="muted" style="font-size:12px">Tip: select multiple images at once (Shift/Ctrl/Cmd-click).</div>
+              </div>
+            </div>
+
+            <label>3D Model (.glb or .gltf)</label>
+            <input id="model3d" type="file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" />
+            <div class="muted" id="model3dName" style="font-size:12px"></div>
+
+            <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap">
+              <button class="btn-primary" type="submit">Add Car</button>
+              <button class="btn" id="resetForm" type="button">Reset Form</button>
+            </div>
+          </form>
+        </section>
+
+        <!-- RIGHT: SEARCH / FILTERS + LIST -->
+        <section class="panel">
+          <h2 style="margin:0 0 10px">Search, Filter & Manage</h2>
+          <div class="row">
+            <div>
+              <label>Search</label>
+              <input id="q" type="text" placeholder="Search make, model, description…" />
+            </div>
+            <div>
+              <label>Sort</label>
+              <select id="sort">
+                <option value="featured">Featured first</option>
+                <option value="new">Newest</option>
+                <option value="priceAsc">Price: Low → High</option>
+                <option value="priceDesc">Price: High → Low</option>
+                <option value="yearDesc">Year: New → Old</option>
+                <option value="yearAsc">Year: Old → New</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row3">
+            <div>
+              <label>Min Price</label>
+              <input id="minPrice" type="number" min="0" step="500" placeholder="0" />
+            </div>
+            <div>
+              <label>Max Price</label>
+              <input id="maxPrice" type="number" min="0" step="500" placeholder="50000" />
+            </div>
+            <div>
+              <label>Min Year</label>
+              <input id="minYear" type="number" min="1980" max="2099" placeholder="2008" />
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:8px">
+            <div>
+              <label>Max Year</label>
+              <input id="maxYear" type="number" min="1980" max="2099" placeholder="2026" />
+            </div>
+            <div>
+              <label>&nbsp;</label>
+              <button class="btn" id="clearFilters" type="button" style="width:100%">Clear Filters</button>
+            </div>
+          </div>
+
+          <div class="toolbar">
+            <button class="btn-ok" id="exportJson" type="button">Download JSON (backup)</button>
+            <button class="btn" id="importJson" type="button">Import JSON</button>
+            <input id="importFile" type="file" accept="application/json" hidden />
+          </div>
+
+          <div class="list" id="list" style="margin-top:12px"></div>
+          <p class="muted" id="empty">No cars match your filters yet.</p>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Shareable Detail Page (rendered when #car=... in URL) ===== -->
+  <div id="detailPage">
+    <div class="detail-title">
+      <h2 id="d-title" style="margin:0"></h2>
+      <div class="detail-price" id="d-price"></div>
+    </div>
+    <div id="d-heroWrap" style="margin:12px 0"></div>
+    <div class="detail-grid">
+      <div class="detail-box">
+        <h3 style="margin:0 0 8px">Details</h3>
+        <div id="d-details" class="muted"></div>
+      </div>
+      <div class="detail-box">
+        <h3 style="margin:0 0 8px">Description</h3>
+        <div id="d-desc"></div>
+      </div>
+    </div>
+    <div style="display:flex; gap:8px; margin-top:12px">
+      <a id="d-contact" class="btn-warn" href="#" target="_blank">Contact Seller</a>
+      <button id="d-print" class="btn-ok">Print</button>
+      <button id="d-back" class="btn">Back to Inventory</button>
+    </div>
+    <p class="muted" style="margin-top:8px">This link contains only the selected car's data. Keep images modest for shorter links.</p>
+  </div>
+
+  <!-- ===== Edit Modal ===== -->
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h3>Edit Listing</h3>
+      <form id="editForm">
+        <div class="row">
+          <div>
+            <label>Make</label>
+            <input id="e-make" type="text" required />
+          </div>
+          <div>
+            <label>Model</label>
+            <input id="e-model" type="text" required />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Year</label>
+            <input id="e-year" type="number" min="1980" max="2099" required />
+          </div>
+          <div>
+            <label>Price (USD)</label>
+            <input id="e-price" type="number" min="0" step="100" required />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Mileage (mi)</label>
+            <input id="e-mileage" type="number" min="0" step="100" />
+          </div>
+          <div>
+            <label>Exterior Color</label>
+            <input id="e-color" type="text" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Transmission</label>
+            <select id="e-trans">
+              <option value="">Select…</option>
+              <option>Automatic</option>
+              <option>Manual</option>
+              <option>CVT</option>
+            </select>
+          </div>
+          <div>
+            <label>Drivetrain</label>
+            <select id="e-drive">
+              <option value="">Select…</option>
+              <option>FWD</option>
+              <option>RWD</option>
+              <option>AWD</option>
+              <option>4WD</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>VIN</label>
+            <input id="e-vin" type="text" />
+          </div>
+          <div>
+            <label>Contact (email or phone)</label>
+            <input id="e-contact" type="text" />
+          </div>
+        </div>
+        <label>Description</label>
+        <textarea id="e-desc"></textarea>
+        <label>Add Photos (appends) — drag to reorder thumbnails</label>
+        <input id="e-photos" type="file" accept="image/*" multiple />
+        <div class="thumbsGrid" id="editThumbs"></div>
+        <label>Replace 3D Model (.glb/.gltf)</label>
+        <input id="e-model3d" type="file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" />
+        <div class="actions">
+          <button class="btn" type="button" id="cancelEdit">Cancel</button>
+          <button class="btn-primary" type="submit">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // ---------- Helpers ----------
+    const $ = (s) => document.querySelector(s);
+    const fmt = new Intl.NumberFormat(undefined);
+    const STORAGE_KEY = 'las-cars.v9'; // new for drag sort
+
+    async function filesToDataUrls(files){
+      const tasks = [...files].map(f=> new Promise((res,rej)=>{ const r = new FileReader(); r.onload = ()=>res(r.result); r.onerror=rej; r.readAsDataURL(f); }));
+      return Promise.all(tasks);
+    }
+    const fileToDataUrl = (f)=> new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(f); });
+
+    // Base64 helpers (URL-safe)
+    const toB64 = (s) => btoa(unescape(encodeURIComponent(s)));
+    const fromB64 = (s) => decodeURIComponent(escape(atob(s)));
+
+    // Share URL encode/decode
+    function shareUrlFor(car){
+      const payload = JSON.stringify({v:1, car});
+      const data = encodeURIComponent(toB64(payload));
+      const base = location.href.split('#')[0];
+      return `${base}#car=${data}`;
+    }
+    function carFromHash(){
+      const m = location.hash.match(/^#car=([^&]+)/);
+      if(!m) return null;
+      try{ const json = fromB64(decodeURIComponent(m[1])); const obj = JSON.parse(json); return obj.car || null; }catch{ return null; }
+    }
+
+    // ---------- Elements ----------
+    const app = $('#app');
+    const detailPage = $('#detailPage');
+    const dTitle = $('#d-title');
+    const dPrice = $('#d-price');
+    const dHeroWrap = $('#d-heroWrap');
+    const dDetails = $('#d-details');
+    const dDesc = $('#d-desc');
+    const dContact = $('#d-contact');
+    const dPrint = $('#d-print');
+    const dBack = $('#d-back');
+
+    const form = $('#carForm');
+    const makeEl = $('#make');
+    const modelEl = $('#model');
+    const yearEl = $('#year');
+    const priceEl = $('#price');
+    const mileageEl = $('#mileage');
+    const colorEl = $('#color');
+    const transEl = $('#trans');
+    const driveEl = $('#drive');
+    const vinEl = $('#vin');
+    const descEl = $('#desc');
+    const contactEl = $('#contact');
+    const photosEl = $('#photos');
+    const model3dEl = $('#model3d');
+    const model3dName = $('#model3dName');
+    const previewEl = $('#preview');
+
+    const qEl = $('#q');
+    const sortEl = $('#sort');
+    const minPriceEl = $('#minPrice');
+    const maxPriceEl = $('#maxPrice');
+    const minYearEl = $('#minYear');
+    const maxYearEl = $('#maxYear');
+    const clearFiltersBtn = $('#clearFilters');
+
+    const exportBtn = $('#exportJson');
+    const importBtn = $('#importJson');
+    const importFile = $('#importFile');
+
+    const listEl = $('#list');
+    const emptyEl = $('#empty');
+    const resetBtn = $('#resetForm');
+
+    // Hero 3D
+    const hero3dSection = $('#hero3dSection');
+    const hero3d = $('#hero3d');
+    const hero3dCaption = $('#hero3dCaption');
+
+    // Edit modal elements
+    const overlay = $('#overlay');
+    const editForm = $('#editForm');
+    const eMake = $('#e-make');
+    const eModel = $('#e-model');
+    const eYear = $('#e-year');
+    const ePrice = $('#e-price');
+    const eMileage = $('#e-mileage');
+    const eColor = $('#e-color');
+    const eTrans = $('#e-trans');
+    const eDrive = $('#e-drive');
+    const eVin = $('#e-vin');
+    const eDesc = $('#e-desc');
+    const eContact = $('#e-contact');
+    const ePhotos = $('#e-photos');
+    const eModel3d = $('#e-model3d');
+    const editThumbs = $('#editThumbs');
+    const cancelEditBtn = $('#cancelEdit');
+
+    // ---------- State ----------
+    let cars = load();
+    let addPhotoDataUrls = []; // add-form photos
+    let addModel3DDataUrl = '';
+    let editingId = null;
+    let dragFromIdx = null; // for thumbnail drag sort
+
+    function migrate(arr){
+      for(const c of arr){
+        if(!c.photos){ c.photos = []; }
+        if(c.photo && !c.photos.length){ c.photos = [c.photo]; delete c.photo; }
+        if(typeof c.model3d === 'undefined'){ c.model3d = ''; }
+      }
+      return arr;
+    }
+
+    function load(){
+      try{
+        const raw = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        return migrate(raw);
+      } catch { return []; }
+    }
+    function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(cars)); }
+
+    // ---------- Hero 3D update ----------
+    function updateHero3D(){
+      const with3d = cars.find(c=>c.model3d);
+      if(with3d){
+        hero3d.setAttribute('src', with3d.model3d);
+        hero3dCaption.textContent = `${with3d.year} ${with3d.make} ${with3d.model}`;
+        hero3dSection.style.display = 'block';
+      } else {
+        hero3dSection.style.display = 'none';
+      }
+    }
+
+    // ---------- Render Inventory ----------
+    function render(){
+      listEl.innerHTML = '';
+
+      const q = qEl.value.trim().toLowerCase();
+      const minP = Number(minPriceEl.value || 0);
+      const maxP = Number(maxPriceEl.value || Infinity);
+      const minY = Number(minYearEl.value || 0);
+      const maxY = Number(maxYearEl.value || Infinity);
+
+      let items = cars.filter(c => {
+        const text = `${c.make} ${c.model} ${c.desc}`.toLowerCase();
+        const priceOk = c.price >= minP && c.price <= maxP;
+        const yearOk = c.year >= minY && c.year <= maxY;
+        const searchOk = !q || text.includes(q);
+        return priceOk && yearOk && searchOk;
+      });
+
+      switch (sortEl.value) {
+        case 'priceAsc': items.sort((a,b)=>a.price-b.price); break;
+        case 'priceDesc': items.sort((a,b)=>b.price-a.price); break;
+        case 'yearDesc': items.sort((a,b)=>b.year-a.year); break;
+        case 'yearAsc': items.sort((a,b)=>a.year-b.year); break;
+        case 'featured': items.sort((a,b)=> (b.featured===true) - (a.featured===true) || b.createdAt - a.createdAt ); break;
+        default: items.sort((a,b)=>b.createdAt-a.createdAt);
+      }
+
+      emptyEl.style.display = items.length ? 'none' : 'block';
+
+      for(const car of items){
+        const card = document.createElement('div');
+        card.className = 'item' + (car.sold ? ' sold' : '');
+
+        const img = document.createElement('img');
+        img.className = 'thumb';
+        img.alt = `${car.year} ${car.make} ${car.model}`;
+        img.src = (car.photos && car.photos[0]) || 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 360\"><rect width=\"100%\" height=\"100%\" fill=\"#020617\"/><text x=\"50%\" y=\"50%\" text-anchor=\"middle\" dominant-baseline=\"middle\" fill=\"#334155\" font-size=\"22\" font-family=\"sans-serif\">No Photo</text></svg>`);
+        card.appendChild(img);
+
+        const strip = document.createElement('div');
+        strip.className = 'gallery-thumbs';
+        (car.photos||[]).forEach((p,idx)=>{
+          const t = document.createElement('img');
+          t.src = p; t.className = idx===0? 'active' : '';
+          t.addEventListener('click', ()=>{
+            img.src = p;
+            strip.querySelectorAll('img').forEach(el=>el.classList.remove('active'));
+            t.classList.add('active');
+          });
+          strip.appendChild(t);
+        });
+        if((car.photos||[]).length){ card.appendChild(strip); }
+
+        const inner = document.createElement('div');
+        inner.className = 'inner';
+
+        const top = document.createElement('div');
+        top.className = 'top';
+
+        const title = document.createElement('div');
+        title.className = 'title';
+
+        const star = document.createElement('span');
+        star.className = 'star' + (car.featured ? ' on' : '');
+        star.textContent = '★';
+        star.title = car.featured ? 'Featured (click to unstar)' : 'Mark as Featured';
+        star.addEventListener('click', () => { car.featured = !car.featured; save(); render(); });
+
+        const name = document.createElement('span');
+        name.textContent = `${car.year} ${car.make} ${car.model}`;
+
+        title.appendChild(star);
+        title.appendChild(name);
+
+        const price = document.createElement('div');
+        price.className = 'price';
+        price.textContent = '$' + fmt.format(car.price);
+
+        top.appendChild(title);
+        top.appendChild(price);
+
+        const desc = document.createElement('div');
+        const line2 = [car.mileage? `${new Intl.NumberFormat().format(car.mileage)} mi` : null, car.color || null, car.trans || null, car.drive || null].filter(Boolean).join(' • ');
+        desc.innerHTML = `${car.desc ? car.desc : 'No description'}${line2? `<div class=\"muted\" style=\"margin-top:6px\">${line2}</div>`:''}${car.vin? `<div class=\"muted\">VIN: ${car.vin}</div>`:''}${car.model3d? `<div class=\"muted\">Has 3D model</div>`:''}`;
+
+        const controls = document.createElement('div');
+        controls.className = 'controls';
+
+        const contactBtn = document.createElement('a');
+        contactBtn.className = 'btn-warn';
+        contactBtn.textContent = 'Contact Seller';
+        if (car.contact) {
+          const isEmail = car.contact.includes('@');
+          contactBtn.href = isEmail
+            ? `mailto:${car.contact}?subject=${encodeURIComponent('Interested in: ' + car.year + ' ' + car.make + ' ' + car.model)}`
+            : `tel:${car.contact.replace(/[^+\\d]/g,'')}`;
+          contactBtn.target = '_blank';
+        } else {
+          contactBtn.href = '#';
+          contactBtn.addEventListener('click', (e)=>{ e.preventDefault(); alert('No contact info provided.'); });
+        }
+
+        const editBtn = document.createElement('button');
+        editBtn.textContent = 'Edit';
+        editBtn.className = 'btn';
+        editBtn.addEventListener('click', ()=> openEdit(car.id));
+
+        const shareBtn = document.createElement('button');
+        shareBtn.textContent = 'Copy Share Link';
+        shareBtn.className = 'btn-alt';
+        shareBtn.addEventListener('click', async ()=>{
+          const url = shareUrlFor(car);
+          try{ await navigator.clipboard.writeText(url); alert('Link copied to clipboard!'); }
+          catch{ prompt('Copy this link:', url); }
+        });
+
+        const soldBtn = document.createElement('button');
+        soldBtn.textContent = car.sold ? 'Mark Available' : 'Mark Sold';
+        soldBtn.className = 'btn';
+        soldBtn.addEventListener('click', () => { car.sold = !car.sold; save(); render(); });
+
+        const delBtn = document.createElement('button');
+        delBtn.textContent = 'Delete';
+        delBtn.className = 'btn-danger';
+        delBtn.addEventListener('click', () => {
+          if(confirm('Delete this listing?')){
+            cars = cars.filter(c => c.id !== car.id);
+            save(); render(); updateHero3D();
+          }
+        });
+
+        controls.appendChild(contactBtn);
+        controls.appendChild(editBtn);
+        controls.appendChild(shareBtn);
+        controls.appendChild(soldBtn);
+        controls.appendChild(delBtn);
+
+        inner.appendChild(top);
+        inner.appendChild(desc);
+        inner.appendChild(controls);
+        card.appendChild(inner);
+        listEl.appendChild(card);
+      }
+
+      updateHero3D();
+    }
+
+    // ---------- Router (hash) ----------
+    function route(){
+      const sharedCar = carFromHash();
+      if(sharedCar){
+        app.style.display = 'none';
+        detailPage.style.display = 'block';
+        renderDetail(sharedCar);
+      } else {
+        detailPage.style.display = 'none';
+        app.style.display = 'block';
+      }
+    }
+
+    function renderDetail(car){
+      dTitle.textContent = `${car.year} ${car.make} ${car.model}` + (car.sold? ' (SOLD)': '');
+      dPrice.textContent = '$' + new Intl.NumberFormat().format(car.price||0);
+      dDesc.textContent = car.desc || 'No description';
+      const line2 = [car.mileage? `${new Intl.NumberFormat().format(car.mileage)} mi` : null, car.color || null, car.trans || null, car.drive || null].filter(Boolean).join(' • ');
+      dDetails.innerHTML = `${line2? line2 : '—'}${car.vin? `<div class=\"muted\">VIN: ${car.vin}</div>`:''}`;
+
+      // Hero media (3D model takes priority)
+      dHeroWrap.innerHTML = '';
+      if(car.model3d){
+        const mv = document.createElement('model-viewer');
+        mv.setAttribute('src', car.model3d);
+        mv.setAttribute('camera-controls','');
+        mv.setAttribute('auto-rotate','');
+        mv.setAttribute('exposure','1.1');
+        mv.setAttribute('shadow-intensity','1');
+        mv.style.width = '100%'; mv.style.height = '420px'; mv.style.background = '#020617'; mv.style.borderRadius='12px'; mv.style.border='1px solid #1f2937';
+        dHeroWrap.appendChild(mv);
+      } else if(car.photos && car.photos[0]){
+        const im = document.createElement('img');
+        im.src = car.photos[0]; im.className = 'detail-hero';
+        dHeroWrap.appendChild(im);
+      } else {
+        const ph = document.createElement('div'); ph.className='detail-hero'; dHeroWrap.appendChild(ph);
+      }
+
+      // Contact link
+      if (car.contact) {
+        const isEmail = String(car.contact).includes('@');
+        dContact.href = isEmail
+          ? `mailto:${car.contact}?subject=${encodeURIComponent('Interested in: ' + car.year + ' ' + car.make + ' ' + car.model)}`
+          : `tel:${String(car.contact).replace(/[^+\\d]/g,'')}`;
+      } else { dContact.href = '#'; dContact.addEventListener('click', e=>{ e.preventDefault(); alert('No contact info provided.'); }); }
+
+      dPrint.onclick = ()=> window.print();
+      dBack.onclick = ()=> { history.replaceState(null,'',location.pathname); route(); };
+    }
+
+    window.addEventListener('hashchange', route);
+
+    // ---------- Add-form file handlers ----------
+    photosEl.addEventListener('change', async () => {
+      if(!photosEl.files || !photosEl.files.length){ addPhotoDataUrls=[]; previewEl.removeAttribute('src'); return; }
+      addPhotoDataUrls = await filesToDataUrls(photosEl.files);
+      previewEl.src = addPhotoDataUrls[0];
+    });
+
+    model3dEl.addEventListener('change', async () => {
+      if(model3dEl.files && model3dEl.files[0]){
+        addModel3DDataUrl = await fileToDataUrl(model3dEl.files[0]);
+        model3dName.textContent = `Selected: ${model3dEl.files[0].name}`;
+      } else { addModel3DDataUrl=''; model3dName.textContent=''; }
+    });
+
+    // ---------- Add form submit ----------
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const car = {
+        id: Math.random().toString(36).slice(2,10),
+        make: makeEl.value.trim(),
+        model: modelEl.value.trim(),
+        year: Number(yearEl.value || 0),
+        price: Number(priceEl.value || 0),
+        mileage: Number(mileageEl.value || 0),
+        color: colorEl.value.trim(),
+        trans: transEl.value,
+        drive: driveEl.value,
+        vin: vinEl.value.trim(),
+        desc: descEl.value.trim(),
+        contact: contactEl.value.trim(),
+        photos: addPhotoDataUrls.slice(),
+        model3d: addModel3DDataUrl || '',
+        sold: false,
+        featured: false,
+        createdAt: Date.now()
+      };
+      cars.push(car);
+      save(); render();
+      form.reset(); addPhotoDataUrls=[]; addModel3DDataUrl=''; model3dName.textContent=''; previewEl.removeAttribute('src'); makeEl.focus();
+    });
+
+    // ---------- Filters ----------
+    clearFiltersBtn.addEventListener('click', () => {
+      qEl.value=''; sortEl.value='featured';
+      minPriceEl.value=''; maxPriceEl.value='';
+      minYearEl.value=''; maxYearEl.value='';
+      render();
+    });
+    [qEl, sortEl, minPriceEl, maxPriceEl, minYearEl, maxYearEl].forEach(el => el.addEventListener('input', render));
+
+    // ---------- Reset form ----------
+    resetBtn.addEventListener('click', () => {
+      form.reset(); addPhotoDataUrls=[]; addModel3DDataUrl=''; model3dName.textContent=''; previewEl.removeAttribute('src'); makeEl.focus();
+    });
+
+    // ---------- Export / Import ----------
+    exportBtn.addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify(cars, null, 2)], {type: 'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'lawrence-auto-sales.json'; a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    importBtn.addEventListener('click', () => importFile.click());
+    importFile.addEventListener('change', async () => {
+      const file = importFile.files && importFile.files[0];
+      if(!file) return;
+      try {
+        const text = await file.text();
+        const data = migrate(JSON.parse(text));
+        if(Array.isArray(data)){
+          cars = data; save(); render();
+        } else { alert('Invalid JSON format.'); }
+      } catch { alert('Could not read this JSON file.'); }
+      importFile.value = '';
+    });
+
+    // ---------- Edit modal ----------
+    function openEdit(id){
+      const c = cars.find(x=>x.id===id); if(!c) return;
+      editingId = id;
+      eMake.value = c.make || '';
+      eModel.value = c.model || '';
+      eYear.value = c.year || '';
+      ePrice.value = c.price || '';
+      eMileage.value = c.mileage || '';
+      eColor.value = c.color || '';
+      eTrans.value = c.trans || '';
+      eDrive.value = c.drive || '';
+      eVin.value = c.vin || '';
+      eDesc.value = c.desc || '';
+      eContact.value = c.contact || '';
+      editThumbs.innerHTML = '';
+
+      (c.photos||[]).forEach((p,i)=>{
+        const wrap = document.createElement('div'); wrap.className='miniWrap'; wrap.draggable = true; wrap.dataset.idx = i;
+        const im = document.createElement('img'); im.src = p; im.className='mini'; im.title = 'Drag to reorder';
+        const btn = document.createElement('button'); btn.className='x'; btn.textContent='×'; btn.title='Remove photo';
+        btn.addEventListener('click', ()=>{ c.photos.splice(i,1); save(); openEdit(id); });
+        // Drag handlers
+        wrap.addEventListener('dragstart', (e)=>{ dragFromIdx = i; e.dataTransfer.effectAllowed='move'; });
+        wrap.addEventListener('dragover', (e)=>{ e.preventDefault(); e.dataTransfer.dropEffect='move'; wrap.classList.add('dragOver'); });
+        wrap.addEventListener('dragleave', ()=>{ wrap.classList.remove('dragOver'); });
+        wrap.addEventListener('drop', (e)=>{
+          e.preventDefault(); wrap.classList.remove('dragOver');
+          const to = parseInt(wrap.dataset.idx,10);
+          if(dragFromIdx===null || dragFromIdx===to) return;
+          const arr = c.photos;
+          const [moved] = arr.splice(dragFromIdx,1);
+          arr.splice(to,0,moved);
+          dragFromIdx = null; save(); openEdit(id); // re-render modal thumbs
+        });
+        wrap.appendChild(im); wrap.appendChild(btn); editThumbs.appendChild(wrap);
+      });
+      overlay.style.display = 'flex';
+    }
+
+    function closeEdit(){ overlay.style.display = 'none'; editForm.reset(); editThumbs.innerHTML=''; editingId=null; dragFromIdx=null; }
+
+    ePhotos.addEventListener('change', async () => { /* append-only handled on submit */ });
+    eModel3d.addEventListener('change', async () => { /* handled on submit with fileToDataUrl */ });
+
+    cancelEditBtn.addEventListener('click', closeEdit);
+    overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeEdit(); });
+
+    editForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const idx = cars.findIndex(x=>x.id===editingId);
+      if(idx===-1) return closeEdit();
+      const c = cars[idx];
+      c.make = eMake.value.trim();
+      c.model = eModel.value.trim();
+      c.year = Number(eYear.value||0);
+      c.price = Number(ePrice.value||0);
+      c.mileage = Number(eMileage.value||0);
+      c.color = eColor.value.trim();
+      c.trans = eTrans.value;
+      c.drive = eDrive.value;
+      c.vin = eVin.value.trim();
+      c.desc = eDesc.value.trim();
+      c.contact = eContact.value.trim();
+      if(ePhotos.files && ePhotos.files.length){
+        const extras = await filesToDataUrls(ePhotos.files);
+        c.photos = (c.photos||[]).concat(extras);
+      }
+      if(eModel3d.files && eModel3d.files[0]){
+        c.model3d = await fileToDataUrl(eModel3d.files[0]);
+      }
+      save(); render(); closeEdit();
+    });
+
+    // ---------- First paint ----------
+    render();
+    route();
+  </script>
+</body>
+</html>
